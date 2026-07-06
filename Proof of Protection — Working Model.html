@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proof of Protection: Working Model</title>
+<style>
+  :root{
+    --navy:#0E2E3D;
+    --navy-2:#123B4D;
+    --teal:#17A398;
+    --teal-deep:#0F7E75;
+    --teal-wash:#E9F5F3;
+    --amber:#C0853E;
+    --amber-wash:#F6ECDD;
+    --alert:#C0453B;
+    --alert-wash:#F8E9E7;
+    --paper:#F4F6F7;
+    --card:#FFFFFF;
+    --ink:#21343E;
+    --muted:#65757D;
+    --line:#DCE4E7;
+    --sans:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --mono:'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--sans); line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:960px; margin:0 auto; padding:0 20px 64px;}
+  /* Header */
+  header{
+    background:linear-gradient(160deg,var(--navy) 0%, var(--navy-2) 100%);
+    color:#fff; padding:34px 0 30px; margin-bottom:26px;
+  }
+  header .wrap{padding-bottom:0;}
+  .wordmark{font-weight:700; letter-spacing:.2px; color:var(--teal); font-size:19px;}
+  h1{font-size:30px; line-height:1.12; margin:14px 0 6px; font-weight:700; letter-spacing:-.4px;}
+  .sub{color:#B9CBD2; font-size:15px; font-weight:500; margin:0 0 14px;}
+  .lede{color:#D6E2E7; font-size:14.5px; max-width:70ch; margin:0;}
+  /* Panels */
+  .panel{
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:24px 26px 26px; margin-bottom:22px;
+    box-shadow:0 1px 2px rgba(14,46,61,.04);
+  }
+  .panel-title{font-size:18px; font-weight:700; color:var(--navy); margin:0 0 4px; letter-spacing:-.2px;}
+  .panel-note{font-size:13.5px; color:var(--muted); margin:0 0 18px; max-width:74ch;}
+  /* Controls list */
+  .ctrl{display:grid; grid-template-columns:1fr; gap:6px; padding:12px 0; border-top:1px solid var(--line);}
+  .ctrl:first-of-type{border-top:none;}
+  .ctrl-top{display:flex; justify-content:space-between; align-items:baseline; gap:12px;}
+  .ctrl-name{font-weight:600; font-size:14.5px;}
+  .ctrl-meta{font-size:11.5px; color:var(--muted); font-weight:500;}
+  .tag{display:inline-block; font-size:10.5px; font-weight:600; padding:1px 7px; border-radius:20px; letter-spacing:.2px; vertical-align:middle; margin-right:7px;}
+  .tag.high{background:var(--alert-wash); color:var(--alert);}
+  .tag.med{background:var(--amber-wash); color:var(--amber);}
+  .tag.low{background:var(--teal-wash); color:var(--teal-deep);}
+  .ctrl-row{display:flex; align-items:center; gap:14px;}
+  input[type=range]{flex:1; height:4px; -webkit-appearance:none; appearance:none; background:var(--line); border-radius:4px; outline-offset:4px;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:18px; height:18px; border-radius:50%; background:var(--navy); cursor:pointer; border:3px solid #fff; box-shadow:0 0 0 1px var(--line);}
+  input[type=range]::-moz-range-thumb{width:16px; height:16px; border-radius:50%; background:var(--navy); cursor:pointer; border:3px solid #fff;}
+  .ctrl.breached input[type=range]::-webkit-slider-thumb{background:var(--alert);}
+  .ctrl.breached input[type=range]::-moz-range-thumb{background:var(--alert);}
+  .rval{font-family:var(--mono); font-size:14px; font-weight:600; width:48px; text-align:right; color:var(--navy);}
+  .ctrl.breached .rval{color:var(--alert);}
+  .breach-flag{font-size:11px; color:var(--alert); font-weight:600;}
+  /* Stat tiles */
+  .stats{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:20px 0 8px;}
+  .tile{border:1px solid var(--line); border-radius:10px; padding:14px 16px; background:var(--paper);}
+  .tile.headline{background:var(--navy); border-color:var(--navy);}
+  .tile.headline.gated{background:var(--alert); border-color:var(--alert);}
+  .tile .k{font-size:11.5px; text-transform:uppercase; letter-spacing:.6px; font-weight:600; color:var(--muted); margin-bottom:4px;}
+  .tile.headline .k{color:#B9CBD2;}
+  .tile.headline.gated .k{color:#F3D4D0;}
+  .tile .v{font-family:var(--mono); font-size:28px; font-weight:600; line-height:1;}
+  .tile.headline .v{color:#fff;}
+  .chip{display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:.5px; background:#fff; color:var(--alert); border-radius:5px; padding:1px 7px; margin-left:8px; vertical-align:middle;}
+  .gatebar{display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-top:6px; padding-top:12px; border-top:1px solid var(--line);}
+  .gate-toggle{display:flex; align-items:center; gap:9px; font-size:13.5px; color:var(--ink); font-weight:500; cursor:pointer;}
+  .gate-toggle input{width:16px; height:16px; accent-color:var(--teal-deep);}
+  .floor-note{font-size:12.5px; color:var(--muted);}
+  .interp{margin-top:16px; padding:14px 16px; border-left:3px solid var(--teal); background:var(--teal-wash); border-radius:0 8px 8px 0; font-size:14px; color:var(--navy);}
+  .interp.warn{border-left-color:var(--alert); background:var(--alert-wash); color:#7A241D;}
+  /* Consequence steppers */
+  .events{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:6px;}
+  .ev{border:1px solid var(--line); border-radius:10px; padding:14px; background:var(--paper);}
+  .ev .band{font-size:12.5px; font-weight:600;}
+  .ev .wt{font-size:11.5px; color:var(--muted); margin-bottom:10px;}
+  .stepper{display:flex; align-items:center; gap:10px;}
+  .stepper button{width:30px; height:30px; border:1px solid var(--line); background:#fff; border-radius:7px; font-size:17px; line-height:1; cursor:pointer; color:var(--navy); font-family:var(--sans);}
+  .stepper button:hover{border-color:var(--navy);}
+  .stepper button:focus-visible{outline:2px solid var(--teal); outline-offset:2px;}
+  .stepper .n{font-family:var(--mono); font-size:19px; font-weight:600; width:34px; text-align:center;}
+  /* Timeline */
+  .scenario{display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap;}
+  .scenario button{border:1px solid var(--line); background:#fff; color:var(--navy); font-family:var(--sans); font-size:13.5px; font-weight:600; padding:9px 16px; border-radius:8px; cursor:pointer;}
+  .scenario button[aria-pressed=true]{background:var(--navy); color:#fff; border-color:var(--navy);}
+  .scenario button:focus-visible{outline:2px solid var(--teal); outline-offset:2px;}
+  .chartbox{width:100%; overflow:hidden;}
+  svg{width:100%; height:auto; display:block;}
+  .legend{display:flex; gap:22px; margin-top:12px; font-size:13px; color:var(--ink); flex-wrap:wrap;}
+  .legend span{display:inline-flex; align-items:center; gap:8px;}
+  .swatch{width:16px; height:4px; border-radius:3px; display:inline-block;}
+  footer{color:var(--muted); font-size:12.5px; text-align:center; margin-top:8px;}
+  .credit{margin-top:26px; padding-top:16px; border-top:1px solid var(--line); font-size:12.5px; color:var(--muted); text-align:center;}
+  @media (max-width:680px){
+    .stats{grid-template-columns:1fr;}
+    .events{grid-template-columns:1fr;}
+    h1{font-size:24px;}
+  }
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="wordmark">Centripetal Safety</div>
+    <h1>Proof of Protection</h1>
+    <p class="sub">A working model of the assurance and consequence measures</p>
+    <p class="lede">Adjust the inputs and watch three things a recordable rate cannot do. Refuse to average away a failing control. Weight events by energy with fatality potential. Expose the gap between what you assure and what befalls you.</p>
+  </div>
+</header>
+<div class="wrap">
+  <!-- ASSURANCE -->
+  <section class="panel">
+    <h2 class="panel-title">Assurance: The Reliability Of What Protects Us</h2>
+    <p class="panel-note">Set the verified reliability of each life-saving control. The tiles compare a weighted average against a weighted geometric mean. Any critical control governing a high-energy hazard is held to a floor, and a breach gates the whole index.</p>
+    <div id="controls"></div>
+    <div class="stats">
+      <div class="tile headline" id="tileHead">
+        <div class="k">Assurance Index</div>
+        <div class="v" id="valHead">0</div>
+      </div>
+      <div class="tile">
+        <div class="k">Weighted average</div>
+        <div class="v" id="valArith">0</div>
+      </div>
+      <div class="tile">
+        <div class="k">Geometric mean</div>
+        <div class="v" id="valGeo">0</div>
+      </div>
+    </div>
+    <div class="gatebar">
+      <label class="gate-toggle"><input type="checkbox" id="gateOn" checked> Apply critical-control gate</label>
+      <span class="floor-note">Floor for high-energy controls: <strong id="floorTxt">70%</strong></span>
+    </div>
+    <div class="interp" id="interpA"></div>
+  </section>
+  <!-- CONSEQUENCE -->
+  <section class="panel">
+    <h2 class="panel-title">Consequence: Weighting By Energy With Fatality Potential</h2>
+    <p class="panel-note">Enter the events for a period. A recordable count treats them all as equal. The severity weighting scales each event by the energy behind it, so a high-energy near miss carries the weight of many minor injuries. This severity-weighted account is the consequence measure. It rises with fatal energy, so to read it against assurance over time it is shown here on a scale where higher is safer, scaled against a fixed reference; in practice it is normalised against the organisation's own rolling baseline.</p>
+    <div class="events">
+      <div class="ev">
+        <div class="band"><span class="tag low">LOW ENERGY</span></div>
+        <div class="wt">Under 500 J · weight 1</div>
+        <div class="stepper"><button data-b="low" data-d="-1" aria-label="fewer low-energy events">−</button><span class="n" id="nLow">12</span><button data-b="low" data-d="1" aria-label="more low-energy events">+</button></div>
+      </div>
+      <div class="ev">
+        <div class="band"><span class="tag med">MEDIUM ENERGY</span></div>
+        <div class="wt">500 to 1500 J · weight 4</div>
+        <div class="stepper"><button data-b="med" data-d="-1" aria-label="fewer medium-energy events">−</button><span class="n" id="nMed">4</span><button data-b="med" data-d="1" aria-label="more medium-energy events">+</button></div>
+      </div>
+      <div class="ev">
+        <div class="band"><span class="tag high">HIGH ENERGY</span></div>
+        <div class="wt">Above 1500 J · weight 12</div>
+        <div class="stepper"><button data-b="high" data-d="-1" aria-label="fewer high-energy events">−</button><span class="n" id="nHigh">3</span><button data-b="high" data-d="1" aria-label="more high-energy events">+</button></div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="tile"><div class="k">Raw count</div><div class="v" id="valRaw">0</div></div>
+      <div class="tile"><div class="k">Severity weighted</div><div class="v" id="valSev">0</div></div>
+      <div class="tile headline" id="tileCons"><div class="k">Consequence measure</div><div class="v" id="valCons">0</div></div>
+    </div>
+    <div class="interp" id="interpC"></div>
+  </section>
+  <!-- DIVERGENCE -->
+  <section class="panel">
+    <h2 class="panel-title">The Signal In The Gap</h2>
+    <p class="panel-note">Assurance and consequence over twelve periods, both shown so that higher is safer. The value lives in the gap between them. Choose a scenario and watch what a rising assurance line means when the consequence line does not follow. An alert requires the gap to hold for three consecutive periods, because a single period is noise.</p>
+    <div class="scenario">
+      <button id="scDecouple" aria-pressed="true">Decoupling</button>
+      <button id="scAligned" aria-pressed="false">Moving together</button>
+    </div>
+    <div class="chartbox"><svg id="chart" viewBox="0 0 720 340" role="img" aria-label="Assurance and consequence over twelve periods"></svg></div>
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--teal)"></span> Assurance (verified control reliability)</span>
+      <span><span class="swatch" style="background:var(--amber)"></span> Consequence (severity-weighted, higher is safer)</span>
+    </div>
+    <div class="interp" id="interpD"></div>
+  </section>
+  <div class="credit">
+    <p style="margin:0 0 10px">A companion to <em>Proof of Protection</em>, Appendix B to <em>Centripetal Safety</em> (EnerGiant Press). Figures are illustrative.</p>
+    <p style="margin:0; text-align:left; max-width:74ch; margin-left:auto; margin-right:auto; line-height:1.5"><strong>For illustration only.</strong> This model is a simplified demonstration of the assurance and consequence measures described in Appendix B of <em>Centripetal Safety</em>. It is provided for illustration and educational purposes only. It is not an operational safety tool, and it must not be used to assess, assure, or make decisions about real controls, hazards, or risk. It is provided "as is", without warranty of any kind, express or implied, including any implied warranties of merchantability, fitness for a particular purpose, accuracy, or non-infringement. To the fullest extent permitted by law, EnerGiant Press and the author accept no liability for any loss, injury, or damage arising from its use. Copyright EnerGiant Press.</p>
+  </div>
+</div>
+<script>
+// ---------- ASSURANCE ----------
+const controls = [
+  {name:"Energy Isolation (Lockout)", band:"high", w:3, r:96},
+  {name:"Fall Prevention (Work at Height)", band:"high", w:3, r:93},
+  {name:"Mobile Plant Separation", band:"high", w:3, r:91},
+  {name:"Confined Space Entry", band:"high", w:3, r:44},
+  {name:"Hot Work and Fire Control", band:"med", w:2, r:88},
+  {name:"Manual Handling", band:"low", w:1, r:85},
+];
+const FLOOR = 70;
+const bandLabel = {high:"High energy", med:"Medium energy", low:"Low energy"};
+function buildControls(){
+  const box = document.getElementById("controls");
+  box.innerHTML = "";
+  controls.forEach((c,i)=>{
+    const div = document.createElement("div");
+    div.className = "ctrl";
+    div.id = "ctrl"+i;
+    div.innerHTML = `
+      <div class="ctrl-top">
+        <div class="ctrl-name"><span class="tag ${c.band}">${bandLabel[c.band].toUpperCase()}</span>${c.name}</div>
+        <div class="ctrl-meta">weight ${c.w}</div>
+      </div>
+      <div class="ctrl-row">
+        <input type="range" min="0" max="100" value="${c.r}" id="r${i}" aria-label="${c.name} verified reliability">
+        <span class="rval" id="rv${i}">${c.r}%</span>
+      </div>
+      <div class="breach-flag" id="bf${i}" style="display:none">Below the ${FLOOR}% floor for a high-energy control</div>`;
+    box.appendChild(div);
+    document.getElementById("r"+i).addEventListener("input",(e)=>{
+      controls[i].r = +e.target.value;
+      document.getElementById("rv"+i).textContent = controls[i].r + "%";
+      computeAssurance();
+    });
+  });
+}
+function computeAssurance(){
+  const gateOn = document.getElementById("gateOn").checked;
+  let sw=0, swln=0;
+  controls.forEach(c=>{ sw += c.w; swln += c.w * Math.log(Math.max(c.r,0.0001)/100); });
+  const arith = controls.reduce((a,c)=>a+c.w*c.r,0)/sw;
+  const geo = Math.exp(swln/sw)*100;
+  const breached = controls.filter(c=>c.band==="high" && c.r < FLOOR);
+  controls.forEach((c,i)=>{
+    const isB = (c.band==="high" && c.r < FLOOR);
+    document.getElementById("ctrl"+i).classList.toggle("breached", isB && gateOn);
+    document.getElementById("bf"+i).style.display = (isB && gateOn) ? "block" : "none";
+  });
+  const gated = gateOn && breached.length>0;
+  const headVal = gated ? Math.min(geo, ...breached.map(c=>c.r)) : geo;
+  const tile = document.getElementById("tileHead");
+  tile.classList.toggle("gated", gated);
+  document.getElementById("valHead").innerHTML = Math.round(headVal) + "%" + (gated ? '<span class="chip">GATED</span>' : "");
+  document.getElementById("valArith").textContent = Math.round(arith) + "%";
+  document.getElementById("valGeo").textContent = Math.round(geo) + "%";
+  const el = document.getElementById("interpA");
+  if(gated){
+    const names = breached.map(c=>c.name).join(" and ");
+    const v = breached.length>1 ? "sit" : "sits";
+    el.className = "interp warn";
+    el.innerHTML = `The weighted average reports <strong>${Math.round(arith)}%</strong>. ${names} ${v} below the ${FLOOR}% floor, so the index is held at <strong>${Math.round(headVal)}%</strong>. The average would have called this safe.`;
+  } else {
+    el.className = "interp";
+    el.innerHTML = `The weighted average reports <strong>${Math.round(arith)}%</strong> and the geometric mean <strong>${Math.round(geo)}%</strong>. No critical control sits below the ${FLOOR}% floor. Drag a control toward zero and the geometric mean falls far faster than the average, because a single failure drags the product toward zero.`;
+  }
+}
+document.getElementById("gateOn").addEventListener("change", computeAssurance);
+// ---------- CONSEQUENCE ----------
+const ev = {low:12, med:4, high:3};
+const evW = {low:1, med:4, high:12};
+const SCALE = 90;
+function computeConsequence(){
+  const raw = ev.low + ev.med + ev.high;
+  const sev = ev.low*evW.low + ev.med*evW.med + ev.high*evW.high;
+  const cons = Math.round(100*Math.exp(-sev/SCALE));
+  document.getElementById("nLow").textContent = ev.low;
+  document.getElementById("nMed").textContent = ev.med;
+  document.getElementById("nHigh").textContent = ev.high;
+  document.getElementById("valRaw").textContent = raw;
+  document.getElementById("valSev").textContent = sev;
+  document.getElementById("valCons").textContent = cons + "%";
+  const highWt = sev>0 ? Math.round(ev.high*evW.high/sev*100) : 0;
+  const highRaw = raw>0 ? Math.round(ev.high/raw*100) : 0;
+  document.getElementById("interpC").innerHTML =
+    `The events sum to <strong>${raw}</strong> by count and to <strong>${sev}</strong> by energy. High-energy events are <strong>${highRaw}%</strong> of the count and <strong>${highWt}%</strong> of the weighted total. A recordable count reads the fatal near miss and the minor strain as one event each. The weighted measure holds them apart.`;
+}
+document.querySelectorAll(".stepper button").forEach(b=>{
+  b.addEventListener("click",()=>{
+    const band=b.dataset.b, d=+b.dataset.d;
+    ev[band]=Math.max(0, ev[band]+d);
+    computeConsequence();
+  });
+});
+// ---------- DIVERGENCE ----------
+const periods = 12;
+const assur = [62,66,70,74,77,80,83,85,87,88,89,90];
+const consDecouple = [60,60,59,58,57,55,54,52,51,50,49,48];
+const consAligned  = [58,61,64,68,71,74,77,80,82,84,85,86];
+const THRESH = 15;
+let scenario = "decouple";
+function xy(i,v,W,H,pad){
+  const x = pad.l + (W-pad.l-pad.r) * (i/(periods-1));
+  const y = pad.t + (H-pad.t-pad.b) * (1 - v/100);
+  return [x,y];
+}
+function poly(arr,W,H,pad){ return arr.map((v,i)=>xy(i,v,W,H,pad).join(",")).join(" "); }
+function renderChart(){
+  const cons = scenario==="decouple" ? consDecouple : consAligned;
+  const W=720,H=340, pad={l:40,r:16,t:16,b:34};
+  const gaps = assur.map((v,i)=>v-cons[i]);
+  const gapLatest = gaps[periods-1];
+  const PERSIST = 3;
+  const alerting = gaps.slice(-PERSIST).every(g=>g>THRESH);
+  const gapFill = alerting ? "rgba(192,69,59,.13)" : "rgba(23,163,152,.12)";
+  // gap band polygon: assurance line forward, consequence line back
+  const top = assur.map((v,i)=>xy(i,v,W,H,pad).join(",")).join(" ");
+  const bot = cons.map((v,i)=>xy(i,v,W,H,pad)).reverse().map(p=>p.join(",")).join(" ");
+  let grid="";
+  [0,25,50,75,100].forEach(g=>{
+    const y = pad.t + (H-pad.t-pad.b)*(1-g/100);
+    grid += `<line x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}" stroke="#E4EAEC" stroke-width="1"/>`;
+    grid += `<text x="${pad.l-8}" y="${y+4}" text-anchor="end" font-size="11" fill="#98A6AC" style="font-family:var(--mono)">${g}</text>`;
+  });
+  let xlabs="";
+  for(let i=0;i<periods;i++){
+    const [x] = xy(i,0,W,H,pad);
+    xlabs += `<text x="${x}" y="${H-pad.b+18}" text-anchor="middle" font-size="10.5" fill="#98A6AC">P${i+1}</text>`;
+  }
+  const [gx,gy1]=xy(periods-1, assur[periods-1],W,H,pad);
+  const [,gy2]=xy(periods-1, cons[periods-1],W,H,pad);
+  document.getElementById("chart").innerHTML = `
+    ${grid}
+    <polygon points="${top} ${bot}" fill="${gapFill}"/>
+    <polyline points="${poly(cons,W,H,pad)}" fill="none" stroke="var(--amber)" stroke-width="2.5" stroke-linejoin="round"/>
+    <polyline points="${poly(assur,W,H,pad)}" fill="none" stroke="var(--teal)" stroke-width="2.5" stroke-linejoin="round"/>
+    ${assur.map((v,i)=>{const[x,y]=xy(i,v,W,H,pad);return `<circle cx="${x}" cy="${y}" r="3" fill="var(--teal)"/>`}).join("")}
+    ${cons.map((v,i)=>{const[x,y]=xy(i,v,W,H,pad);return `<circle cx="${x}" cy="${y}" r="3" fill="var(--amber)"/>`}).join("")}
+    <line x1="${gx}" y1="${gy1}" x2="${gx}" y2="${gy2}" stroke="${alerting?'var(--alert)':'var(--teal-deep)'}" stroke-width="1.5" stroke-dasharray="3,3"/>
+    <text x="${gx-6}" y="${(gy1+gy2)/2+4}" text-anchor="end" font-size="12" font-weight="600" style="font-family:var(--mono)" fill="${alerting?'var(--alert)':'var(--teal-deep)'}">gap ${gapLatest}</text>
+  `;
+  const d = document.getElementById("interpD");
+  if(alerting){
+    d.className="interp warn";
+    d.innerHTML = `Assurance has climbed to <strong>${assur[periods-1]}</strong> while consequence has fallen to <strong>${cons[periods-1]}</strong>. The gap of <strong>${gapLatest}</strong> has held above the alert band for three consecutive periods, which rules out noise. The controls being verified may not be the controls that carry the fatal energy, or the verification itself has become theatre. A single headline figure would have hidden this.`;
+  } else {
+    d.className="interp";
+    d.innerHTML = `Assurance and consequence rise together, ending at <strong>${assur[periods-1]}</strong> and <strong>${cons[periods-1]}</strong> with a gap of only <strong>${gapLatest}</strong>. The control model is holding. Improvements in what we verify are followed by fewer high-energy events, which is the evidence the composite exists to find.`;
+  }
+}
+document.getElementById("scDecouple").addEventListener("click",()=>{
+  scenario="decouple";
+  document.getElementById("scDecouple").setAttribute("aria-pressed","true");
+  document.getElementById("scAligned").setAttribute("aria-pressed","false");
+  renderChart();
+});
+document.getElementById("scAligned").addEventListener("click",()=>{
+  scenario="aligned";
+  document.getElementById("scAligned").setAttribute("aria-pressed","true");
+  document.getElementById("scDecouple").setAttribute("aria-pressed","false");
+  renderChart();
+});
+// ---------- init ----------
+buildControls();
+computeAssurance();
+computeConsequence();
+renderChart();
+</script>
+</body>
+</html>
